@@ -1,18 +1,5 @@
 <template>
     <div class="sql2json">
-        <div class="panel-header">
-            <div>
-                <p class="eyebrow">SQL quick utility</p>
-                <h2>INSERT to JSON mapper</h2>
-                <p class="subtle">Paste an INSERT statement, convert into structured JSON, and inspect with JSONEditor.</p>
-            </div>
-            <el-space wrap>
-                <el-tag effect="dark" type="success">Multi-row supported</el-tag>
-                <el-tag effect="dark" type="info">Auto type detection</el-tag>
-                <el-tag effect="dark" type="warning">Trims comments/semicolon</el-tag>
-            </el-space>
-        </div>
-
         <div class="panel-grid">
             <div class="card card-input">
                 <div class="card-header">
@@ -324,6 +311,7 @@ h2 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 16px;
+    height: calc(100vh - 40px - 32px);
 }
 
 .card {
@@ -378,14 +366,14 @@ h3 {
 }
 
 .card-output {
-    min-height: 360px;
+    // min-height: 360px;
     display: flex;
     flex-direction: column;
 }
 
 .editor {
     flex: 1;
-    min-height: 320px;
+    // min-height: 320px;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.05);

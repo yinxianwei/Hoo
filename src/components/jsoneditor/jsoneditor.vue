@@ -1,20 +1,5 @@
 <template>
     <div class="jsoneditor-page jse-theme-dark">
-        <div class="panel-header">
-            <div>
-                <p class="eyebrow">Diff studio</p>
-                <h2>Side-by-side JSON compare</h2>
-                <p class="hint">Paste JSON on either side, sync across, and highlight adds/replaces/removals.</p>
-            </div>
-            <el-space wrap>
-                <el-tag effect="plain"
-                        type="info">Local cache</el-tag>
-                <el-tag effect="plain"
-                        type="success">Tree/Text modes</el-tag>
-                <el-tag effect="plain"
-                        type="warning">Patch aware</el-tag>
-            </el-space>
-        </div>
         <div class="jsoneditor-grid">
             <div class="editor-card">
                 <div class="editor-header">
@@ -57,6 +42,60 @@ import { generateJSONPatch } from 'generate-json-patch';
 let leftEditor!: JsonEditor;
 let rightEditor!: JsonEditor;
 let jsonPatch: any = {};
+
+function pythonToJSON(text: string): string {
+    // Replace Python literals
+    text = text.replace(/\bNone\b/g, 'null');
+    text = text.replace(/\bTrue\b/g, 'true');
+    text = text.replace(/\bFalse\b/g, 'false');
+
+    // Convert single-quoted strings to double-quoted, handling Python escapes
+    let result = '';
+    let i = 0;
+    while (i < text.length) {
+        if (text[i] === "'") {
+            i++;
+            let inner = '';
+            while (i < text.length && text[i] !== "'") {
+                if (text[i] === '\\' && i + 1 < text.length) {
+                    const next = text[i + 1];
+                    if (next === "'") {
+                        inner += "'";
+                        i += 2;
+                    } else if (next === '\\') {
+                        inner += '\\\\';
+                        i += 2;
+                    } else if (next === 'n') {
+                        inner += '\\n';
+                        i += 2;
+                    } else if (next === 't') {
+                        inner += '\\t';
+                        i += 2;
+                    } else if (next === 'r') {
+                        inner += '\\r';
+                        i += 2;
+                    } else {
+                        inner += text[i] + text[i + 1];
+                        i += 2;
+                    }
+                } else if (text[i] === '"') {
+                    inner += '\\"';
+                    i++;
+                } else {
+                    inner += text[i];
+                    i++;
+                }
+            }
+            if (i < text.length) i++;
+            result += '"' + inner + '"';
+        } else {
+            result += text[i];
+            i++;
+        }
+    }
+
+    return result;
+}
 
 function getContentText(content: Content) {
     if (isTextContent(content)) {
@@ -124,10 +163,18 @@ function leftClick() {
     window.localStorage.setItem('leftText', getContentText(content));
 }
 
+function parseJSON(text: string) {
+    try {
+        return JSON.parse(text);
+    } catch {
+        return JSON.parse(pythonToJSON(text));
+    }
+}
+
 async function compareClick() {
     jsonPatch = {};
-    let leftValue = JSON.parse(toTextContent(leftEditor.get()).text);
-    let rightValue = JSON.parse(toTextContent(rightEditor.get()).text);
+    let leftValue = parseJSON(toTextContent(leftEditor.get()).text);
+    let rightValue = parseJSON(toTextContent(rightEditor.get()).text);
     generateJSONPatch(leftValue, rightValue).forEach(val => {
         jsonPatch[val.path] = val;
     });
@@ -151,7 +198,8 @@ function historyClick() {}
     padding: 16px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
-    height: calc(100vh - var(--el-tabs-header-height) - 32px);
+    height: calc(100vh - 40px - 32px);
+    overflow: hidden;
     color: #e5eaf3;
 }
 
@@ -240,7 +288,7 @@ h2 {
 }
 
 .toolbar .el-button:not(.is-circle) {
-    width: 120px;
+    width: 60px;
 }
 
 .diff-replace .jse-contents {
